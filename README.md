@@ -113,15 +113,56 @@ agent-claim release --id agent-alpha
 
 ## Use as an OpenCode plugin
 
-Drop the adapters into your project:
+### Option A: register via opencode.json (recommended)
+
+Create or edit `opencode.json` in your project root (or `~/.config/opencode/opencode.json`
+for global). Add the package to the `plugin` array:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": [
+    "opencode-agent-coordination"
+  ]
+}
+```
+
+OpenCode resolves the package from `node_modules` and loads both the `agent_mail`
+and `agent_claim` namespaces automatically. Restart OpenCode after editing.
+
+To use a local checkout instead of the published package:
+
+```json
+{
+  "plugin": [
+    "file:./packages/agent-coordination"
+  ]
+}
+```
+
+Manual steps if auto-load does not pick it up:
+
+1. `npm install opencode-agent-coordination`
+2. Create `.opencode/plugins/agent-mail/index.ts` and `.opencode/plugins/agent-claim/index.ts`
+3. Put this in each file (adjust the path):
+
+```ts
+// .opencode/plugins/agent-mail/index.ts
+import { register } from 'opencode-agent-coordination/opencode/mail';
+export default { id: 'opencode-agent-coordination.mail', setup: register };
+```
+
+4. Restart OpenCode. The namespaces appear in the tool catalog.
+
+### Option B: drop-in adapter files
+
+Copy the adapters into your project and point the imports at the package:
 
 ```bash
 mkdir -p .opencode/plugins/agent-mail .opencode/plugins/agent-claim
 cp node_modules/opencode-agent-coordination/lib/opencode-agent-mail/index.ts .opencode/plugins/agent-mail/index.ts
 cp node_modules/opencode-agent-coordination/lib/opencode-agent-claim/index.ts .opencode/plugins/agent-claim/index.ts
 ```
-
-Then point the imports at the package:
 
 ```ts
 // .opencode/plugins/agent-mail/index.ts
