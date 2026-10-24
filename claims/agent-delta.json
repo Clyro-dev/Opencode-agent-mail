@@ -1,0 +1,25 @@
+{
+  "id": "agent-delta",
+  "task": "auto-session-title",
+  "branch": "HEAD",
+  "scopes": [
+    {
+      "path": ".opencode/plugins/session-title/index.ts",
+      "section": "whole",
+      "kind": "anchor",
+      "intent": "extend",
+      "note": "add model-independent automatic session title plugin",
+      "status": "active",
+      "resolution": "missing",
+      "matches": []
+    }
+  ],
+  "status": "active",
+  "createdAt": 1792759808920,
+  "heartbeatAt": 1792759808920,
+  "ttlMin": 60,
+  "v": 2,
+  "files": [
+    ".opencode/plugins/session-title/index.ts"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "v": 1,
+  "path": "src/pages/Products/ProductDetail.tsx",
+  "decision": "split",
+  "note": "zeta owns the two currency capsule pickers in the overview header and Pricing card; lambda keeps the save gate + option-group cap removal, pi's currency typo fixes already applied.",
+  "order": [],
+  "participants": [
+    "agent-lambda"
+  ],
+  "by": "agent-zeta",
+  "status": "active",
+  "completedAt": "",
+  "ts": "2026-10-23T17:16:55.153Z"
+}

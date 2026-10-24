@@ -1,0 +1,226 @@
+diff --git a/src/pages/Products/AddProductWizard.tsx b/src/pages/Products/AddProductWizard.tsx
+index 0e098909..6f474bb9 100644
+--- a/src/pages/Products/AddProductWizard.tsx
++++ b/src/pages/Products/AddProductWizard.tsx
+@@ -66,7 +66,6 @@ import { imgUrl } from '@/lib/imgUrl';
+ import { buildSteps } from './wizard/steps';
+ import { getCurrencySymbol } from './wizard/money';
+ import { planImageSelection } from './wizard/images';
+-import DescriptionEditor from './wizard/panels/DescriptionEditor';
+ import {
+   getChargeError,
+   getInfoSectionError,
+@@ -659,9 +658,6 @@ export default function AddProductWizard({
+   // In-flight R2 uploads (multi-file picks run concurrently; the zone stays
+   // busy until the last one settles).
+   const digitalUploadsRef = useRef(0);
+-  // The description is a WYSIWYG field, not a textarea - the toolbar needs
+-  // the contentEditable node to apply styles to the live selection.
+-  const descriptionEditorRef = useRef<HTMLDivElement | null>(null);
+   const [uploadingDigital, setUploadingDigital] = useState(false);
+   const [draggedFile, setDraggedFile] = useState(false);
+   const [selectedMatrixCell, setSelectedMatrixCell] = useState<[number, number] | null>(null);
+@@ -837,8 +833,9 @@ export default function AddProductWizard({
+   const progressGroups = useMemo(
+     () => [
+       { name: 'Product', indices: [0, 1] },
+-      { name: 'Pricing & stock', indices: [2, 3] },
+-      { name: 'Delivery', indices: [4] },
++      { name: 'Pricing', indices: [2] },
++      { name: 'Delivery', indices: [3] },
++      { solo: true, indices: [4] },
+       { solo: true, indices: [5] },
+     ],
+     [],
+@@ -1911,9 +1908,8 @@ export default function AddProductWizard({
+       if (key === 'basics') return validateBasics();
+       if (key === 'options') return validateOptions();
+       if (key === 'pricing') return validatePricing();
+-      if (key === 'inventory') return validateStock();
+-      if (key === 'shipping') return validateDelivery();
+-      if (key === 'files') return validateFiles();
++      if (key === 'shipping') return validateDelivery() && validateStock();
++      if (key === 'files') return validateFiles() && validateStock();
+       if (key === 'review') return validateReview();
+       return true;
+     },
+@@ -1964,8 +1960,9 @@ export default function AddProductWizard({
+       if (p !== -1) return p;
+     }
+     if (hasError('inventoryQuantity') || hasError('optionStock')) {
+-      const inv = steps.findIndex((s) => s.key === 'inventory');
+-      if (inv !== -1) return inv;
++      const target = checkoutType === 'reseller' ? 'shipping' : 'files';
++      const idx = steps.findIndex((s) => s.key === target);
++      if (idx !== -1) return idx;
+     }
+     if (
+       hasError('dispatchMessage') ||
+@@ -1987,7 +1984,7 @@ export default function AddProductWizard({
+       if (rev !== -1) return rev;
+     }
+     return 0;
+-  }, [hasError, fieldErrors, steps]);
++  }, [hasError, fieldErrors, steps, checkoutType]);
+ 
+   const touchStepFields = useCallback(
+     (stepNum: number) => {
+@@ -1999,7 +1996,7 @@ export default function AddProductWizard({
+       if (key === 'pricing') {
+         fields.push('price', ...formData.charges.map((c) => `charge-${c.id}`));
+       }
+-      if (key === 'inventory') {
++      if (key === 'shipping' || key === 'files') {
+         if (formData.trackInventory) fields.push('inventoryQuantity');
+       }
+       if (key === 'shipping') {
+@@ -2930,11 +2927,17 @@ export default function AddProductWizard({
+                                   <button
+                                     type="button"
+                                     className={`sp-chip${isStepDone ? ' done' : ''}${isStepCurrent ? ' current' : ''}${isReached ? ' reached' : ''}`}
+-                                    disabled={i >= step}
+                                     aria-label={`${i + 1}. ${steps[i]?.label ?? ''}${isStepDone ? ' (completed)' : ''}`}
+                                     aria-current={isStepCurrent ? 'step' : undefined}
+                                     onClick={() => {
+-                                      if (i < step) goToStep(i);
++                                      if (i === step) return;
++                                      if (i < step) {
++                                        goToStep(i);
++                                      } else if (validateStep(step)) {
++                                        goToStep(i);
++                                      } else {
++                                        toast('Complete this step first', 'error');
++                                      }
+                                     }}
+                                   >
+                                     {k > 0 && <span className="sp-ln" />}
+@@ -3026,14 +3029,14 @@ export default function AddProductWizard({
+           {/* STEP 0: DETAILS (basics) */}
+           {currentStepKey === 'basics' && (
+             <>
+-              {/* Card 1: Title & Description */}
++              {/* Card 1: Product title */}
+               <div className="sp-card" id="sp-card-title">
+                 <div className="sp-card-header">
+-                  <h2 className="sp-card-title">Title & description</h2>
++                  <h2 className="sp-card-title">Product title</h2>
+                 </div>
+                 <div className="sp-field">
+                   <label className="sp-label" htmlFor="aw-product-title">
+-                    Title <span className="sp-req">*</span>
++                    Product title <span className="sp-req">*</span>
+                     <InfoTip content="Shown at checkout and on the customer receipt." />
+                   </label>
+                   <input
+@@ -3058,24 +3061,9 @@ export default function AddProductWizard({
+                     </span>
+                   )}
+                 </div>
+-
+-                <div className="sp-field">
+-                  <label className="sp-label" htmlFor="aw-product-description">
+-                    Description
+-                    <InfoTip content="Optional. Formatted text shown under the title at checkout." />
+-                  </label>
+-                  <DescriptionEditor
+-                    id="aw-product-description"
+-                    value={formData.description}
+-                    onChange={(html) => updateField('description', html)}
+-                    editorRef={descriptionEditorRef}
+-                    disabled={saving}
+-                    placeholder="Add a product description…"
+-                  />
+-                </div>
+               </div>
+ 
+-              {/* Card 1b: Info sections - extra details on the checkout page */}
++              {/* Card 1b: Product details - main description plus titled detail sections */}
+               <InfoSectionsCard {...ctx} />
+ 
+               {/* Card 2: Media */}
+@@ -3656,7 +3644,8 @@ export default function AddProductWizard({
+ 
+           {/* STEP 4: STOCK FIRST, THEN THE QUANTITY RULE. Two cards: how many
+               you have, then how many one buyer may take from it. */}
+-          {currentStepKey === 'inventory' && (
++          {((currentStepKey === 'shipping' && checkoutType === 'reseller') ||
++             (currentStepKey === 'files' && checkoutType !== 'reseller')) && (
+             <>
+               <div className="sp-card" id="sp-card-inventory">
+                 <div className="sp-card-header">
+@@ -4463,7 +4452,39 @@ export default function AddProductWizard({
+             </div>
+           )}
+ 
+-          {/* STEP 6: REVIEW & REDIRECTS */}
++          {/* STEP: PAYMENTS */}
++           {currentStepKey === 'payments' && (
++             <>
++               <div className="sp-card" id="sp-card-payments">
++                 <div className="sp-card-header">
++                   <div>
++                     <h2 className="sp-card-title">Payment method</h2>
++                     <p
++                       className="sp-card-sub"
++                       style={{ margin: '4px 0 0 0', fontSize: 13, color: 'var(--muted)' }}
++                     >
++                       Pre-configured payment processor for checkout.
++                     </p>
++                   </div>
++                 </div>
++                 <div className="sp-review-payment-box">
++                   <div className="sp-review-payment-head">
++                     <div className="sp-review-payment-badge">
++                       <span className="sp-review-payment-dot" />
++                       <span className="sp-review-payment-name">Stripe Checkout</span>
++                     </div>
++                     <span className="sp-review-payment-status">Active & Connected</span>
++                   </div>
++                   <p className="sp-review-payment-desc">
++                     Customer transactions for this product will be processed securely via your
++                     connected Stripe merchant gateway.
++                   </p>
++                 </div>
++               </div>
++             </>
++           )}
++
++           {/* STEP 6: REVIEW & REDIRECTS */}
+           {currentStepKey === 'review' && (
+             <>
+               {/* Product Summary in small */}
+@@ -4544,34 +4565,6 @@ export default function AddProductWizard({
+                 </div>
+               </div>
+ 
+-              {/* Payment method (already chosen) */}
+-              <div className="sp-card" id="sp-card-review-payment">
+-                <div className="sp-card-header">
+-                  <div>
+-                    <h2 className="sp-card-title">Payment method</h2>
+-                    <p
+-                      className="sp-card-sub"
+-                      style={{ margin: '4px 0 0 0', fontSize: 13, color: 'var(--muted)' }}
+-                    >
+-                      Pre-configured payment processor for checkout.
+-                    </p>
+-                  </div>
+-                </div>
+-                <div className="sp-review-payment-box">
+-                  <div className="sp-review-payment-head">
+-                    <div className="sp-review-payment-badge">
+-                      <span className="sp-review-payment-dot" />
+-                      <span className="sp-review-payment-name">Stripe Checkout</span>
+-                    </div>
+-                    <span className="sp-review-payment-status">Active & Connected</span>
+-                  </div>
+-                  <p className="sp-review-payment-desc">
+-                    Customer transactions for this product will be processed securely via your
+-                    connected Stripe merchant gateway.
+-                  </p>
+-                </div>
+-              </div>
+-
+               {/* Redirect URLs */}
+               <div className="sp-card" id="sp-card-redirects">
+                 <div className="sp-card-header">

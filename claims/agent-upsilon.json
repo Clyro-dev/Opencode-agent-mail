@@ -1,0 +1,40 @@
+{
+  "id": "agent-upsilon",
+  "task": "wizard-steps-reorg",
+  "branch": "main",
+  "scopes": [
+    {
+      "path": "src/pages/Products/AddProductWizard.tsx",
+      "section": "L2795-L2830",
+      "kind": "range",
+      "start": 2795,
+      "end": 2830,
+      "intent": "replace",
+      "note": "Reorganize steps: add Payments step, move stock into delivery, enable forward chip navigation",
+      "status": "active",
+      "resolved": {
+        "start": 2795,
+        "end": 2830
+      },
+      "resolution": "range"
+    },
+    {
+      "path": "src/pages/Products/wizard/steps.ts",
+      "section": "",
+      "kind": "file",
+      "intent": "replace",
+      "note": "Reorganize steps: add Payments step, move stock into delivery, enable forward chip navigation",
+      "status": "active",
+      "resolution": "file"
+    }
+  ],
+  "status": "active",
+  "createdAt": 1792854176964,
+  "heartbeatAt": 1792854176964,
+  "ttlMin": 60,
+  "v": 2,
+  "files": [
+    "src/pages/Products/AddProductWizard.tsx",
+    "src/pages/Products/wizard/steps.ts"
+  ]
+}

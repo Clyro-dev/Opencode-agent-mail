@@ -1,0 +1,12 @@
+{
+  "v": 1,
+  "path": "src/pages/Products/AddProductWizard.tsx",
+  "decision": "replace",
+  "note": "Reorganize steps: add Payments step, move stock into delivery, enable forward chip navigation",
+  "order": [],
+  "participants": [],
+  "by": "agent-upsilon",
+  "status": "active",
+  "completedAt": "",
+  "ts": "2026-10-24T15:02:56.683Z"
+}

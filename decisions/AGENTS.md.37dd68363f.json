@@ -1,0 +1,17 @@
+{
+  "v": 1,
+  "path": "AGENTS.md",
+  "decision": "serialize",
+  "note": "agent-chi appends the commit/push tool section, then releases to agent-tau",
+  "order": [
+    "agent-chi",
+    "agent-tau"
+  ],
+  "participants": [
+    "agent-tau"
+  ],
+  "by": "agent-chi",
+  "status": "done",
+  "completedAt": "2026-10-23T12:56:34.902Z",
+  "ts": "2026-10-23T11:58:03.507Z"
+}

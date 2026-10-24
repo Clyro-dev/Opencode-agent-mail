@@ -1,0 +1,60 @@
+{
+  "v": 1,
+  "id": "agent-omicron",
+  "acks": [
+    {
+      "of": "agent-lambda",
+      "path": "src/pages/Products/AddProductWizard.tsx",
+      "section": "L103-L103",
+      "ts": "2026-10-23T17:39:17.745Z"
+    },
+    {
+      "of": "agent-lambda",
+      "path": "src/pages/Products/AddProductWizard.tsx",
+      "section": "L1440-L1446",
+      "ts": "2026-10-23T17:39:17.748Z"
+    },
+    {
+      "of": "agent-mu",
+      "path": "src/pages/Products/AddProductWizard.tsx",
+      "section": "L3360-L3410",
+      "ts": "2026-10-23T17:39:17.963Z"
+    },
+    {
+      "of": "agent-mu",
+      "path": "src/pages/Products/wizard/panels/ChargesList.tsx",
+      "section": "ChargesList",
+      "ts": "2026-10-23T17:39:17.965Z"
+    },
+    {
+      "of": "agent-pi",
+      "path": "src/pages/Products/AddProductWizard.tsx",
+      "section": "L1-L5",
+      "ts": "2026-10-24T11:46:37.641Z"
+    },
+    {
+      "of": "agent-pi",
+      "path": "src/pages/Products/AddProductWizard.tsx",
+      "section": "L660-L708",
+      "ts": "2026-10-24T11:46:37.645Z"
+    },
+    {
+      "of": "agent-pi",
+      "path": "src/pages/Products/AddProductWizard.tsx",
+      "section": "L3080-L3110",
+      "ts": "2026-10-24T11:46:37.648Z"
+    },
+    {
+      "of": "agent-pi",
+      "path": "src/styles/shopify-addproduct.css",
+      "section": "",
+      "ts": "2026-10-24T11:46:37.650Z"
+    },
+    {
+      "of": "agent-pi",
+      "path": "src/styles/merchant-addproduct.css",
+      "section": "",
+      "ts": "2026-10-24T11:46:37.652Z"
+    }
+  ]
+}
