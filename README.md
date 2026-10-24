@@ -1,35 +1,31 @@
 # opencode-agent-coordination
 
-[![npm version](https://img.shields.io/npm/v/opencode-agent-coordination.svg)](https://www.npmjs.com/package/opencode-agent-coordination)
-[![license](https://img.shields.io/npm/l/opencode-agent-coordination.svg)](./LICENSE)
-[![node](https://img.shields.io/node/v/opencode-agent-coordination.svg)](https://nodejs.org)
-
-> **Coordinate parallel AI agents.** A shared mailbox, section-level work claims, and a live HTML board — all running on one `.agent` directory.
+Shared mailbox, section-level claims, and a live HTML board for parallel AI coding agents.
+OpenCode plugin plus CLI. Node 20+.
 
 ```
-  agent-alpha  ──┐
-  agent-beta   ──┼──►  .agent/  ◄──  http://127.0.0.1:4317  (live board)
-  agent-gamma  ──┘       mail.jsonl · claims/ · presence/
+  agent-alpha  --+
+  agent-beta   --+-->  .agent/  <--  http://127.0.0.1:4317  (live board)
+  agent-gamma  --+     mail.jsonl  claims/  presence/
 ```
 
----
+## What it does
 
-## ✨ What it does
+When several AI agents (or several OpenCode tabs) edit the same repo at the
+same time, they collide. This package gives them a shared coordination layer:
 
-When several AI agents (or several OpenCode tabs) edit the **same repo at the same time**, they collide.
-This package gives them a shared coordination layer so they don't step on each other:
+- Agent mail: send, ask, reply, ack, thread. One append-only JSONL log.
+- Section claims: lease `path#Function` or `path#L10-L40` before editing.
+  Overlaps are refused.
+- Decisions: record split / serialize / extend / replace for shared files.
+- Live board: a local HTML page (SSE, no polling) showing messages, claims,
+  decisions.
+- OpenCode plugin: exposes `agent_mail` and `agent_claim` tool namespaces.
 
-- 📬 **Agent mail** — send, ask, reply, ack, thread. One append-only JSONL log is the source of truth.
-- 🔒 **Section claims** — lease `path#Function` or `path#L10-L40` before editing. Overlaps are refused.
-- 🤝 **Decisions** — record `split` / `serialize` / `extend` / `replace` for shared files.
-- 📺 **Live board** — a local HTML page (SSE, no polling) showing every message, claim, and decision.
-- 🧠 **OpenCode plugin** — exposes `agent_mail` and `agent_claim` tool namespaces to your agents.
+State is shared across git worktrees. It resolves to the main checkout's
+`.agent` automatically.
 
-State is **shared across git worktrees** automatically (it resolves to the main checkout's `.agent`).
-
----
-
-## 🚀 Quick start
+## Install
 
 ```bash
 npm install -g opencode-agent-coordination
@@ -41,29 +37,26 @@ Or as a dev dependency:
 npm install --save-dev opencode-agent-coordination
 ```
 
----
-
-## 📺 Start the HTML board (see agents talk in real time)
+## Start the HTML board (see agents talk in real time)
 
 ```bash
-# starts the server AND opens your browser
+# starts the server and opens your browser
 agent-board --open
 
-# or pick a port / host
+# or pick a port and host
 agent-board --port 4321 --host 127.0.0.1
 ```
 
-Then open **http://127.0.0.1:4317** in your browser.
+Then open http://127.0.0.1:4317 in your browser.
 
-You'll see:
-- a live group-chat of every agent message (updates instantly via SSE),
-- a sidebar with the roster (who's working, idle, blocked),
+You will see:
+
+- a live group chat of every agent message (updates instantly via SSE),
+- a sidebar with the roster (working, idle, blocked),
 - active claims grouped by file with resolved line ranges,
 - decisions and acks.
 
-> From a project folder, you can also run: `npm run board` (after adding the script) or `npx opencode-agent-coordination` → `agent-board`.
-
-### npm scripts (add to your `package.json`)
+npm scripts (add to your package.json):
 
 ```json
 {
@@ -74,12 +67,10 @@ You'll see:
 }
 ```
 
----
-
-## 📬 Mail commands (simple)
+## Mail commands (simple)
 
 ```bash
-# who's around
+# who is around
 agent-mail roster
 
 # send a message
@@ -98,12 +89,10 @@ agent-mail reply --id agent-beta --msg <message-id> --body "this one"
 agent-mail watch --id agent-alpha --json
 ```
 
----
-
-## 🔒 Claim commands (before you edit)
+## Claim commands (before you edit)
 
 ```bash
-# claim a function + a line range
+# claim a function and a line range
 agent-claim claim --id agent-alpha --task my-task --files src/foo.ts#myFn,src/bar.ts#L10-L40
 
 # see who holds what on a file
@@ -122,9 +111,7 @@ agent-claim ack --id agent-alpha --of agent-beta --files src/foo.ts#theirFn
 agent-claim release --id agent-alpha
 ```
 
----
-
-## 🧠 Use as an OpenCode plugin
+## Use as an OpenCode plugin
 
 Drop the adapters into your project:
 
@@ -142,48 +129,59 @@ import { register } from 'opencode-agent-coordination/opencode/mail';
 export default { id: 'opencode-agent-coordination.mail', setup: register };
 ```
 
-Restart OpenCode. The `agent_mail` and `agent_claim` namespaces appear in the tool catalog.
+Restart OpenCode. The `agent_mail` and `agent_claim` namespaces appear in the
+tool catalog.
 
----
-
-## ⚙️ Configuration
+## Configuration
 
 | Env var | Purpose |
 |---|---|
 | `AGENT_MAIL_DIR` | Override the state directory (default `<project>/.agent`) |
-| `AGENT_CLAIM_ROOT` | Override the checkout root used for `git diff` (claim verify) |
+| `AGENT_CLAIM_ROOT` | Override the checkout root used for git diff (claim verify) |
 | `AGENT_ID` | Default callsign for CLI tools |
 
-State resolves to the **main checkout's `.agent`** in a git worktree, so agents in separate worktrees share one mailbox.
+State resolves to the main checkout's `.agent` in a git worktree, so agents in
+separate worktrees share one mailbox.
 
----
+## How it works
 
-## 🏗️ How it works
+<details>
+<summary>Show the data flow</summary>
 
-```mermaid
-flowchart LR
-  A[Agent session A] -->|send/claim| D[(.agent/)]
-  B[Agent session B] -->|send/claim| D
-  C[Human browser] -->|SSE| S[agent-board server]
-  S --> D
-  D -->|mail.jsonl| S
-  D -->|claims/*.json| S
-  D -->|presence/*.json| S
+```
+  agent session A  -->  .agent/  <--  agent-board server  <--  browser
+  agent session B  -->  .agent/
+                            |
+                            +-- mail.jsonl   (messages)
+                            +-- claims/      (one file per agent)
+                            +-- decisions/   (per-file coordination)
+                            +-- presence/    (who is doing what)
+                            +-- seen/        (per-agent cursors)
 ```
 
-- **One append-only log** (`mail.jsonl`) = source of truth for messages.
-- **Per-agent cursors** (`seen/*.json`) = materialized unread inboxes (O(new bytes) reads).
-- **Claim files** (`claims/*.json`) = one per agent, holding `path#section` scopes.
-- **Decisions** (`decisions/*.json`) = per-file coordination records.
-- **Board** watches the dir with `fs.watch` + safety poll and streams via SSE.
+</details>
 
----
+- One append-only log (`mail.jsonl`) is the source of truth for messages.
+- Per-agent cursors (`seen/*.json`) give materialized unread inboxes.
+  Reads are O(new bytes).
+- Claim files (`claims/*.json`) hold `path#section` scopes per agent.
+- Decisions (`decisions/*.json`) record how shared files are handled.
+- The board watches the dir with fs.watch plus a safety poll and streams
+  via SSE.
 
-## 📋 Requirements
+- One append-only log (`mail.jsonl`) is the source of truth for messages.
+- Per-agent cursors (`seen/*.json`) give materialized unread inboxes.
+  Reads are O(new bytes).
+- Claim files (`claims/*.json`) hold `path#section` scopes per agent.
+- Decisions (`decisions/*.json`) record how shared files are handled.
+- The board watches the dir with fs.watch plus a safety poll and streams
+  via SSE.
+
+## Requirements
 
 - Node.js >= 20
 - Git (for `agent-claim verify`)
 
-## 📄 License
+## License
 
 MIT
